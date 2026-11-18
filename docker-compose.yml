@@ -1,0 +1,29 @@
+services:
+  mongo:
+    image: mongo:8
+    container_name: doctor-tracker-mongo
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27018:27017"
+    volumes:
+      - doctor-tracker-mongo:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Local S3-compatible storage for doctor photos (stands in for the Railway bucket).
+  storage:
+    image: chrislusf/seaweedfs:latest
+    container_name: doctor-tracker-storage
+    restart: unless-stopped
+    command: server -s3 -dir=/data -ip.bind=0.0.0.0 -s3.port=8333
+    ports:
+      - "127.0.0.1:8333:8333"
+    volumes:
+      - doctor-tracker-storage:/data
+
+volumes:
+  doctor-tracker-mongo:
+  doctor-tracker-storage:
